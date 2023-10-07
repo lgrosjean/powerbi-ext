@@ -1,43 +1,65 @@
 """Meltano PowerBI extension."""
 from __future__ import annotations
 
-import os
-import pkgutil
-import subprocess
-import sys
-from pathlib import Path
-from typing import Any
+import typing as t
 
+import requests
 import structlog
 from meltano.edk import models
 from meltano.edk.extension import ExtensionBase
-from meltano.edk.process import Invoker, log_subprocess_error
 
-log = structlog.get_logger()
+from powerbi_ext.auth import get_token
+
+BASE_URL = "https://api.powerbi.com/v1.0/myorg"
+TIMEOUT = 30
 
 
-class PowerBI(ExtensionBase):
+class PowerBIExtension(ExtensionBase):
     """Extension implementing the ExtensionBase interface."""
 
     def __init__(self) -> None:
         """Initialize the extension."""
-        self.powerbi_bin = "pbi"  # verify this is the correct name
-        self.powerbi_invoker = Invoker(self.powerbi_bin)
+        self.log = structlog.get_logger(name=self.__class__.__name__)
+        token = get_token()
+        self.log.info("Bearer token accessed.")
+        self.headers = {"Authorization": f"Bearer {token}"}
 
-    def invoke(self, command_name: str | None, *command_args: Any) -> None:
-        """Invoke the underlying cli, that is being wrapped by this extension.
+    def invoke(self, *args: t.Any, **kwargs: t.Any) -> None:
+        """Invoke the underlying CLI that is being wrapped by this extension.
 
         Args:
-            command_name: The name of the command to invoke.
-            command_args: The arguments to pass to the command.
+            args: Ignored positional arguments.
+            kwargs: Ignored keyword arguments.
+
+        Raises:
+            NotImplementedError: There is no underlying CLI for this extension.
         """
-        try:
-            self.powerbi_invoker.run_and_log(command_name, *command_args)
-        except subprocess.CalledProcessError as err:
-            log_subprocess_error(
-                f"powerbi {command_name}", err, "PowerBI invocation failed"
-            )
-            sys.exit(err.returncode)
+        raise NotImplementedError
+
+    # TODO: add the ability to use workspace name or dataset name instead of id
+    # TODO: add the other options to the settings
+    def refresh(
+        self,
+        workspace_id: str,
+        dataset_id: str,
+        notify_option: t.Literal[
+            "MailOnCompletion", "MailOnFailure", "NoNotification"
+        ] = "MailOnCompletion",
+        type: str | None = None,
+    ):
+        """Trigger a refresh of the dataset."""
+        body = {
+            "notifyOption": notify_option,
+            # "type": type,
+        }
+
+        url = BASE_URL + f"/groups/{workspace_id}/datasets/{dataset_id}" + "/refreshes"
+        res = requests.post(url, json=body, headers=self.headers, timeout=TIMEOUT)
+        self.log.info(res.status_code)
+        if res.status_code != 200:
+            print(res.reason, res.headers)
+        else:
+            return res.headers["RequestId"]
 
     def describe(self) -> models.Describe:
         """Describe the extension.
@@ -50,9 +72,6 @@ class PowerBI(ExtensionBase):
             commands=[
                 models.ExtensionCommand(
                     name="powerbi_extension", description="extension commands"
-                ),
-                models.InvokerCommand(
-                    name="powerbi_invoker", description="pass through invoker"
-                ),
+                )
             ]
         )

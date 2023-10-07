@@ -1,0 +1,27 @@
+version: 1
+project_id: powerbi-ext
+send_anonymous_usage_stats: false
+default_environment: test
+environments:
+  - name: test
+plugins:
+  utilities:
+    - name: powerbi-ext
+      namespace: powerbi-ext
+      pip_url: -e .
+      commands:
+        help: --help
+      settings: # Meltano will automatically load this config to POWERBI_EXT_.. ENV VAR
+        - name: tenant_id
+          description: PowerBI tenant ID
+          kind: password
+        - name: client_id
+          description: PowerBI Client ID
+          kind: password
+        - name: client_secret
+          description: PowerBI Client Secret
+          kind: password
+        - name: workspace_id
+          description: The unique identifier of the PowerBI Workspace
+        - name: dataset_id
+          description: The unique identifier of the PowerBI Dataset to refresh

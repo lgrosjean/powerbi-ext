@@ -3,7 +3,50 @@
 
 PowerBI is a meltano utility extension for PowerBI.
 
-## Installing this extension for local development
+## Getting Start
+
+### Installation
+
+Add the following to your `meltano.yml` configuration file:
+```yaml
+plugins:
+  utilities:
+    - name: powerbi
+      namespace: powerbi
+      pip_url: -e .
+      executable: powerbi
+```
+
+Then install your project
+```
+meltano install
+```
+
+### Configuration
+
+Add the following environments variables:
+```
+POWERBI_EXT_TENANT_ID=...
+POWERBI_EXT_CLIENT_ID=...
+POWERBI_EXT_CLIENT_SECRET=...
+```
+
+or configurate using Meltano 
+```
+# Configure plugin interactively
+meltano config powerbi-ext set --interactive
+```
+### Invoking
+
+```
+# run with node selection criteria
+meltano invoke powerbi refresh -w <workspace_id> <dataset_id>
+
+# run with a command specified in meltano.yml
+meltano invoke powerbi:my_command
+```
+
+## Local development
 
 1. Install the project dependencies with `poetry install`:
 
@@ -15,14 +58,6 @@ poetry install
 2. Verify that you can invoke the extension:
 
 ```shell
-poetry run powerbi_extension --help
-poetry run powerbi_extension describe --format=yaml
-poetry run powerbi_invoker --help # if you have are wrapping another tool
+poetry run powerbi --help
+poetry run powerbi describe --format=yaml
 ```
-
-## Template updates
-
-This project was generated with [copier](https://copier.readthedocs.io/en/stable/) from the [Meltano EDK template](https://github.com/meltano/edk).
-Answers to the questions asked during the generation process are stored in the `.copier_answers.yml` file.
-
-Removing this file can potentially cause unwanted changes to the project if the supplied answers differ from the original when using `copier update`.

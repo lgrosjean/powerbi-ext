@@ -1,58 +1,24 @@
 """PowerBI cli entrypoint."""
 
-import os
 import sys
-from typing import List
 
 import structlog
 import typer
 from meltano.edk.extension import DescribeFormat
 from meltano.edk.logging import default_logging_config, parse_log_level
-from powerbi_ext.extension import PowerBI
+
+from powerbi_ext.extension import PowerBIExtension
 
 APP_NAME = "PowerBI"
 
 log = structlog.get_logger(APP_NAME)
 
-ext = PowerBI()
+ext = PowerBIExtension()
 
-typer.core.rich = None  # remove to enable stylized help output when `rich` is installed
 app = typer.Typer(
     name=APP_NAME,
     pretty_exceptions_enable=False,
 )
-
-
-@app.command()
-def initialize(
-    ctx: typer.Context,
-    force: bool = typer.Option(False, help="Force initialization (if supported)"),
-) -> None:
-    """Initialize the PowerBI plugin."""
-    try:
-        ext.initialize(force)
-    except Exception:
-        log.exception(
-            "initialize failed with uncaught exception, please report to maintainer"
-        )
-        sys.exit(1)
-
-
-@app.command(
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
-)
-def invoke(ctx: typer.Context, command_args: List[str]) -> None:
-    """Invoke the plugin.
-
-    Note: that if a command argument is a list, such as command_args,
-    then unknown options are also included in the list and NOT stored in the
-    context as usual.
-    """
-    command_name, command_args = command_args[0], command_args[1:]
-    log.debug(
-        "called", command_name=command_name, command_args=command_args, env=os.environ
-    )
-    ext.pass_through_invoker(log, command_name, *command_args)
 
 
 @app.command()
@@ -71,6 +37,23 @@ def describe(
         sys.exit(1)
 
 
+@app.command()
+def refresh(
+    workspace_id: str = typer.Option(
+        None,
+        "-w",
+        "--workspace",
+        envvar="POWERBI_EXT_WORKSPACE_ID",
+        show_envvar=True,
+        help="Workspace ID. If not provided, will look for Dataset in 'My Workspace'",
+    ),
+    dataset_id: str = typer.Argument(..., help="Dataset ID"),
+) -> None:
+    """Refresh the given dataset in the given workspace"""
+
+    typer.echo(ext.refresh(workspace_id, dataset_id))
+
+
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
@@ -82,15 +65,18 @@ def main(
         False, "--log-levels", envvar="LOG_LEVELS", help="Show log levels"
     ),
     meltano_log_json: bool = typer.Option(
-        False, "--meltano-log-json",
+        False,
+        "--meltano-log-json",
         envvar="MELTANO_LOG_JSON",
-        help="Log in the meltano JSON log format"
+        help="Log in the meltano JSON log format",
     ),
 ) -> None:
-    """Simple Meltano extension that wraps the  CLI."""
+    """Meltano utility extension that provides PowerBI API commands."""
     default_logging_config(
         level=parse_log_level(log_level),
         timestamps=log_timestamps,
         levels=log_levels,
-        json_format=meltano_log_json
+        json_format=meltano_log_json,
     )
+    if ctx.invoked_subcommand is None:
+        typer.echo(ctx.get_help())
