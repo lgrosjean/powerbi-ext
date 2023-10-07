@@ -11,10 +11,11 @@ Add the following to your `meltano.yml` configuration file:
 ```yaml
 plugins:
   utilities:
-    - name: powerbi
-      namespace: powerbi
+    - name: powerbi-ext
+      namespace: powerbi-ext
       pip_url: -e .
-      executable: powerbi
+      commands:
+        help: --help
 ```
 
 Then install your project
