@@ -24,10 +24,13 @@ typer = "^0.6.1"
 azure-identity = "^1.14.0"
 requests = "^2.31.0"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "^22.3.0"
 isort = "^5.10.1"
 flake8 = "^3.9.0"
+pytest = "^7.4.2"
+pytest-cov = "^4.1.0"
+pylint = "^3.0.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.8"]
