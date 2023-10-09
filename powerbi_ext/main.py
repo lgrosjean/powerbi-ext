@@ -1,7 +1,5 @@
 """PowerBI cli entrypoint."""
 
-import sys
-
 import structlog
 import typer
 from meltano.edk.extension import DescribeFormat
@@ -12,8 +10,6 @@ from powerbi_ext.extension import PowerBIExtension
 APP_NAME = "PowerBI"
 
 log = structlog.get_logger(APP_NAME)
-
-ext = PowerBIExtension()
 
 app = typer.Typer(
     name=APP_NAME,
@@ -28,13 +24,8 @@ def describe(
     )
 ) -> None:
     """Describe the available commands of this extension."""
-    try:
-        typer.echo(ext.describe_formatted(output_format))
-    except Exception:
-        log.exception(
-            "describe failed with uncaught exception, please report to maintainer"
-        )
-        sys.exit(1)
+    ext = PowerBIExtension()
+    typer.echo(ext.describe_formatted(output_format))
 
 
 @app.command()
@@ -43,14 +34,12 @@ def refresh(
         None,
         "-w",
         "--workspace",
-        envvar="POWERBI_EXT_WORKSPACE_ID",
-        show_envvar=True,
         help="Workspace ID. If not provided, will look for Dataset in 'My Workspace'",
     ),
     dataset_id: str = typer.Argument(..., help="Dataset ID"),
 ) -> None:
     """Refresh the given dataset in the given workspace"""
-
+    ext = PowerBIExtension()
     typer.echo(ext.refresh(workspace_id, dataset_id))
 
 

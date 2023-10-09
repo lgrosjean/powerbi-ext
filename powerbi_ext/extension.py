@@ -17,10 +17,11 @@ TIMEOUT = 30
 class PowerBIExtension(ExtensionBase):
     """Extension implementing the ExtensionBase interface."""
 
-    def __init__(self) -> None:
+    def __init__(self, token: t.Optional[str] = None) -> None:
         """Initialize the extension."""
         self.log = structlog.get_logger(name=self.__class__.__name__)
-        token = get_token()
+        if not token:
+            token = get_token()
         self.log.info("Bearer token accessed.")
         self.headers = {"Authorization": f"Bearer {token}"}
 
@@ -57,9 +58,9 @@ class PowerBIExtension(ExtensionBase):
         res = requests.post(url, json=body, headers=self.headers, timeout=TIMEOUT)
         self.log.info(res.status_code)
         if res.status_code != 200:
-            print(res.reason, res.headers)
-        else:
-            return res.headers["RequestId"]
+            self.log.error(res.reason, res.headers)
+            raise requests.RequestException(res.status_code, res.reason, res.headers)
+        return res.headers["RequestId"]
 
     def describe(self) -> models.Describe:
         """Describe the extension.
