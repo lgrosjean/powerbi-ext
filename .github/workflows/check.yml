@@ -1,4 +1,4 @@
-name: Test
+name: Check
 
 on:
   pull_request:
@@ -25,17 +25,23 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Pytest
-        run: pip install pytest pytest-cov
+      - name: Install Poetry
+        run: |
+          pipx install poetry
+          poetry --version
+
+      - name: Install dependencies
+        run: |
+          poetry install
 
       - name: Test with pytest
-        run: pytest --cov=$PACKAGE_DIR $TESTS_DIR
+        run: poetry run pytest --cov=$PACKAGE_DIR $TESTS_DIR
 
   lint:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.9", "3.10", "3.11"]
 
     steps:
       - uses: actions/checkout@v4
@@ -55,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.9", "3.10", "3.11"]
 
     steps:
       - uses: actions/checkout@v4
