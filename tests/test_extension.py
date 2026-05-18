@@ -49,7 +49,7 @@ class TestExtension:
         )
         url = f"{BASE_URL}/groups/{WORKSPACE_ID}/datasets/{DATASET_ID}/refreshes"
         body = {
-            "notifyOption": "MailOnCompletion",
+            "notifyOption": "NoNotification",
         }
         mock_post.return_value = mock_res
         res = self.ext.refresh()
@@ -63,7 +63,7 @@ class TestExtension:
         mock_res = MagicMock(status_code=400)
         url = f"{BASE_URL}/groups/{WORKSPACE_ID}/datasets/{DATASET_ID}/refreshes"
         body = {
-            "notifyOption": "MailOnCompletion",
+            "notifyOption": "NoNotification",
         }
         mock_post.return_value = mock_res
         with pytest.raises(RequestException):

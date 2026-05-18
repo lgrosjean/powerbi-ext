@@ -49,7 +49,7 @@ class PowerBIExtension(ExtensionBase):
         self,
         notify_option: t.Literal[
             "MailOnCompletion", "MailOnFailure", "NoNotification"
-        ] = "MailOnCompletion",
+        ] = "NoNotification",
         type: str | None = None,
     ):
         """Trigger a refresh of the configured dataset."""
