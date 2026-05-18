@@ -1,5 +1,6 @@
 """PowerBI cli entrypoint."""
 
+import json
 import sys
 
 import requests
@@ -95,6 +96,59 @@ def refresh(
         raise typer.Exit(code=EXIT_TIMEOUT) from err
     except (requests.RequestException, ClientAuthenticationError) as err:
         log.error("refresh failed with auth or HTTP error", error=str(err))
+        raise typer.Exit(code=EXIT_ERROR) from err
+
+
+@app.command()
+def status(
+    request_id: str = typer.Option(
+        None,
+        "--request-id",
+        help="Refresh request ID to look up. Defaults to the most recent refresh.",
+    ),
+) -> None:
+    """Get the status of a Power BI refresh.
+
+    With --request-id, fetches that specific refresh. Without, returns the
+    most recent refresh from history.
+
+    Exit codes match `refresh`: 0 Completed, 1 Failed/Disabled, 3 Auth/HTTP error.
+    """
+    try:
+        ext = PowerBIExtension()
+        if request_id:
+            result = ext.get_refresh_status(request_id)
+        else:
+            history_records = ext.list_refresh_history(top=1)
+            if not history_records:
+                log.error("no refresh history found for dataset")
+                raise typer.Exit(code=EXIT_ERROR)
+            result = history_records[0]
+        typer.echo(json.dumps(result, indent=2, default=str))
+        if result.get("status") == "Completed":
+            raise typer.Exit(code=EXIT_COMPLETED)
+        raise typer.Exit(code=EXIT_FAILED)
+    except (requests.RequestException, ClientAuthenticationError) as err:
+        log.error("status query failed with auth or HTTP error", error=str(err))
+        raise typer.Exit(code=EXIT_ERROR) from err
+
+
+@app.command()
+def history(
+    top: int = typer.Option(
+        10, "--top", help="Number of recent refreshes to return (max 200)."
+    ),
+) -> None:
+    """List recent refresh history for the configured dataset.
+
+    Exit 0 unless an auth or HTTP error occurs.
+    """
+    try:
+        ext = PowerBIExtension()
+        records = ext.list_refresh_history(top=top)
+        typer.echo(json.dumps(records, indent=2, default=str))
+    except (requests.RequestException, ClientAuthenticationError) as err:
+        log.error("history query failed with auth or HTTP error", error=str(err))
         raise typer.Exit(code=EXIT_ERROR) from err
 
 
