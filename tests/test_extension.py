@@ -28,7 +28,17 @@ class TestExtension:
 
     @patch("requests.post")
     def test_refresh_ok(self, mock_post: MagicMock):
-        mock_res = MagicMock(status_code=200, headers={"RequestId": "RequestId"})
+        request_id = "abcd-1234"
+        mock_res = MagicMock(
+            status_code=202,
+            headers={
+                "Location": (
+                    f"https://api.powerbi.com/v1.0/myorg/groups/{WORKSPACE_ID}"
+                    f"/datasets/{DATASET_ID}/refreshes/{request_id}"
+                ),
+                "x-ms-request-id": request_id,
+            },
+        )
         url = BASE_URL + f"/groups/{WORKSPACE_ID}/datasets/{DATASET_ID}" + "/refreshes"
         body = {
             "notifyOption": "MailOnCompletion",
@@ -38,11 +48,11 @@ class TestExtension:
         mock_post.assert_called_once_with(
             url, json=body, headers=self.ext.headers, timeout=TIMEOUT
         )
-        assert res == "RequestId"
+        assert res == request_id
 
     @patch("requests.post")
     def test_refresh_not_ok(self, mock_post: MagicMock):
-        mock_res = MagicMock(status_code=202)
+        mock_res = MagicMock(status_code=400)
         url = BASE_URL + f"/groups/{WORKSPACE_ID}/datasets/{DATASET_ID}" + "/refreshes"
         body = {
             "notifyOption": "MailOnCompletion",

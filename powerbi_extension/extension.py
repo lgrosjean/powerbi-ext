@@ -56,11 +56,15 @@ class PowerBIExtension(ExtensionBase):
 
         url = BASE_URL + f"/groups/{workspace_id}/datasets/{dataset_id}" + "/refreshes"
         res = requests.post(url, json=body, headers=self.headers, timeout=TIMEOUT)
-        self.log.info(res.status_code)
-        if res.status_code != 200:
-            self.log.error(res.reason, res.headers)
+        self.log.info("refresh trigger response", status_code=res.status_code)
+        # Power BI's enhanced refresh API returns 202 Accepted on success, not 200.
+        if res.status_code != 202:
+            self.log.error(res.reason, status_code=res.status_code)
             raise requests.RequestException(res.status_code, res.reason, res.headers)
-        return res.headers["RequestId"]
+        # The requestId is exposed in the Location header (path tail) and mirrored
+        # in x-ms-request-id; the upstream `RequestId` header is not a real header.
+        location = res.headers.get("Location", "")
+        return location.rsplit("/", 1)[-1] or res.headers["x-ms-request-id"]
 
     def describe(self) -> models.Describe:
         """Describe the extension.
