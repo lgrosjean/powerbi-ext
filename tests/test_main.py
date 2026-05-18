@@ -15,16 +15,33 @@ def test_main():
 
 
 @patch.object(PowerBIExtension, "__new__")
-def test_refresh_ok(mock_ext_class: MagicMock):
-    mock_ext_refresh = MagicMock()
-    mock_ext = MagicMock(refresh=mock_ext_refresh)
+def test_refresh_wait_completed(mock_ext_class: MagicMock):
+    mock_ext = MagicMock()
+    mock_ext.refresh.return_value = "request_id"
+    mock_ext.wait_for_refresh.return_value = {"status": "Completed"}
     mock_ext_class.return_value = mock_ext
 
     result = runner.invoke(app, ["refresh"])
 
-    mock_ext_class.assert_called_once()
-    mock_ext_refresh.assert_called_once_with()
+    mock_ext.refresh.assert_called_once_with(notify_option="NoNotification")
+    mock_ext.wait_for_refresh.assert_called_once_with(
+        "request_id", poll_interval=30, timeout=3600
+    )
     assert result.exit_code == 0
+
+
+@patch.object(PowerBIExtension, "__new__")
+def test_refresh_no_wait(mock_ext_class: MagicMock):
+    mock_ext = MagicMock()
+    mock_ext.refresh.return_value = "request_id"
+    mock_ext_class.return_value = mock_ext
+
+    result = runner.invoke(app, ["refresh", "--no-wait"])
+
+    mock_ext.refresh.assert_called_once_with(notify_option="NoNotification")
+    mock_ext.wait_for_refresh.assert_not_called()
+    assert result.exit_code == 0
+    assert "request_id" in result.stdout
 
 
 @patch.object(PowerBIExtension, "__new__")

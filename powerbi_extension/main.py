@@ -1,11 +1,21 @@
 """PowerBI cli entrypoint."""
 
+import sys
+
+import requests
 import structlog
 import typer
+from azure.core.exceptions import ClientAuthenticationError
 from meltano.edk.extension import DescribeFormat
 from meltano.edk.logging import default_logging_config, parse_log_level
 
-from powerbi_extension.extension import PowerBIExtension
+from powerbi_extension.extension import PowerBIExtension, PowerBIRefreshTimeout
+
+# Exit codes used by `refresh` so Meltano can stop a pipeline on failure.
+EXIT_COMPLETED = 0
+EXIT_FAILED = 1
+EXIT_TIMEOUT = 2
+EXIT_ERROR = 3
 
 APP_NAME = "PowerBI"
 
@@ -29,14 +39,63 @@ def describe(
 
 
 @app.command()
-def refresh() -> None:
+def refresh(
+    wait: bool = typer.Option(
+        True,
+        "--wait/--no-wait",
+        help="Poll until the refresh reaches a terminal status. Default: wait.",
+    ),
+    poll_interval: int = typer.Option(
+        30, "--poll-interval", help="Seconds between status polls when --wait."
+    ),
+    timeout: int = typer.Option(
+        3600, "--timeout", help="Max seconds to wait for the refresh to terminate."
+    ),
+    notify: str = typer.Option(
+        "NoNotification",
+        "--notify",
+        help="Power BI notifyOption: NoNotification | MailOnCompletion | MailOnFailure.",
+    ),
+) -> None:
     """Trigger a refresh of the configured Power BI dataset.
 
     Workspace and dataset IDs are read from Meltano-populated environment
     variables (POWERBI_WORKSPACE_ID, POWERBI_DATASET_ID).
+
+    Exit codes:
+      0 Completed   1 Failed/Disabled   2 Timeout   3 Auth or HTTP error
     """
-    ext = PowerBIExtension()
-    typer.echo(ext.refresh())
+    try:
+        ext = PowerBIExtension()
+        request_id = ext.refresh(notify_option=notify)
+        log.info("refresh triggered", request_id=request_id)
+        typer.echo(request_id)
+        if not wait:
+            raise typer.Exit(code=EXIT_COMPLETED)
+        result = ext.wait_for_refresh(
+            request_id, poll_interval=poll_interval, timeout=timeout
+        )
+        status = result.get("status", "Unknown")
+        if status == "Completed":
+            log.info("refresh completed", request_id=request_id)
+            raise typer.Exit(code=EXIT_COMPLETED)
+        log.error(
+            "refresh ended in non-success terminal state",
+            request_id=request_id,
+            status=status,
+            error=result.get("serviceExceptionJson"),
+        )
+        raise typer.Exit(code=EXIT_FAILED)
+    except PowerBIRefreshTimeout as err:
+        log.error(
+            "refresh did not complete in time",
+            request_id=err.request_id,
+            last_status=err.last_status,
+        )
+        raise typer.Exit(code=EXIT_TIMEOUT) from err
+    except (requests.RequestException, ClientAuthenticationError) as err:
+        log.error("refresh failed with auth or HTTP error", error=str(err))
+        raise typer.Exit(code=EXIT_ERROR) from err
 
 
 @app.callback(invoke_without_command=True)
