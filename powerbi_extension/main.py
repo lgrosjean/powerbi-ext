@@ -29,18 +29,14 @@ def describe(
 
 
 @app.command()
-def refresh(
-    workspace_id: str = typer.Option(
-        None,
-        "-w",
-        "--workspace",
-        help="Workspace ID. If not provided, will look for Dataset in 'My Workspace'",
-    ),
-    dataset_id: str = typer.Argument(..., help="Dataset ID"),
-) -> None:
-    """Refresh the given dataset in the given workspace"""
+def refresh() -> None:
+    """Trigger a refresh of the configured Power BI dataset.
+
+    Workspace and dataset IDs are read from Meltano-populated environment
+    variables (POWERBI_WORKSPACE_ID, POWERBI_DATASET_ID).
+    """
     ext = PowerBIExtension()
-    typer.echo(ext.refresh(workspace_id, dataset_id))
+    typer.echo(ext.refresh())
 
 
 @app.callback(invoke_without_command=True)

@@ -27,32 +27,32 @@ def test_get_credential_with_args():
 
 
 def test_get_credential_without_args_missing_envvar_tenant_id():
-    if os.getenv("POWERBI_EXT_TENANT_ID"):
-        del os.environ["POWERBI_EXT_TENANT_ID"]
-    os.environ["POWERBI_EXT_CLIENT_ID"] = CLIENT_ID
-    os.environ["POWERBI_EXT_CLIENT_SECRET"] = CLIENT_SECRET
+    if os.getenv("POWERBI_TENANT_ID"):
+        del os.environ["POWERBI_TENANT_ID"]
+    os.environ["POWERBI_CLIENT_ID"] = CLIENT_ID
+    os.environ["POWERBI_CLIENT_SECRET"] = CLIENT_SECRET
 
-    with pytest.raises(KeyError, match="POWERBI_EXT_TENANT_ID"):
+    with pytest.raises(KeyError, match="POWERBI_TENANT_ID"):
         get_credential()
 
 
 def test_get_credential_without_args_missing_envvar_client_id():
-    os.environ["POWERBI_EXT_TENANT_ID"] = TENANT_ID
-    if os.getenv("POWERBI_EXT_CLIENT_ID"):
-        del os.environ["POWERBI_EXT_CLIENT_ID"]
-    os.environ["POWERBI_EXT_CLIENT_SECRET"] = CLIENT_SECRET
+    os.environ["POWERBI_TENANT_ID"] = TENANT_ID
+    if os.getenv("POWERBI_CLIENT_ID"):
+        del os.environ["POWERBI_CLIENT_ID"]
+    os.environ["POWERBI_CLIENT_SECRET"] = CLIENT_SECRET
 
-    with pytest.raises(KeyError, match="POWERBI_EXT_CLIENT_ID"):
+    with pytest.raises(KeyError, match="POWERBI_CLIENT_ID"):
         get_credential()
 
 
 def test_get_credential_without_args_missing_envvar_client_secret():
-    os.environ["POWERBI_EXT_TENANT_ID"] = TENANT_ID
-    os.environ["POWERBI_EXT_CLIENT_ID"] = CLIENT_ID
-    if os.getenv("POWERBI_EXT_CLIENT_SECRET"):
-        del os.environ["POWERBI_EXT_CLIENT_SECRET"]
+    os.environ["POWERBI_TENANT_ID"] = TENANT_ID
+    os.environ["POWERBI_CLIENT_ID"] = CLIENT_ID
+    if os.getenv("POWERBI_CLIENT_SECRET"):
+        del os.environ["POWERBI_CLIENT_SECRET"]
 
-    with pytest.raises(KeyError, match="POWERBI_EXT_CLIENT_SECRET"):
+    with pytest.raises(KeyError, match="POWERBI_CLIENT_SECRET"):
         get_credential()
 
 

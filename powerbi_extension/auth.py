@@ -14,11 +14,11 @@ def get_credential(
 ):
     """Get Azure ClientSecretCredential using Meltano env variables"""
     if not tenant_id:
-        tenant_id = os.environ["POWERBI_EXT_TENANT_ID"]
+        tenant_id = os.environ["POWERBI_TENANT_ID"]
     if not client_id:
-        client_id = os.environ["POWERBI_EXT_CLIENT_ID"]
+        client_id = os.environ["POWERBI_CLIENT_ID"]
     if not client_secret:
-        client_secret = os.environ["POWERBI_EXT_CLIENT_SECRET"]
+        client_secret = os.environ["POWERBI_CLIENT_SECRET"]
 
     credential = ClientSecretCredential(
         tenant_id=tenant_id,

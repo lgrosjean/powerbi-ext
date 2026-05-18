@@ -1,6 +1,7 @@
 """Meltano PowerBI extension."""
 from __future__ import annotations
 
+import os
 import typing as t
 
 import requests
@@ -18,8 +19,15 @@ class PowerBIExtension(ExtensionBase):
     """Extension implementing the ExtensionBase interface."""
 
     def __init__(self, token: t.Optional[str] = None) -> None:
-        """Initialize the extension."""
+        """Initialize the extension.
+
+        Workspace, dataset, and API URL are sourced from Meltano-populated
+        env vars (POWERBI_WORKSPACE_ID, POWERBI_DATASET_ID, POWERBI_API_URL).
+        """
         self.log = structlog.get_logger(name=self.__class__.__name__)
+        self.workspace_id = os.environ["POWERBI_WORKSPACE_ID"]
+        self.dataset_id = os.environ["POWERBI_DATASET_ID"]
+        self.api_url = os.environ.get("POWERBI_API_URL", BASE_URL)
         if not token:
             token = get_token()
         self.log.info("Bearer token accessed.")
@@ -37,24 +45,23 @@ class PowerBIExtension(ExtensionBase):
         """
         raise NotImplementedError
 
-    # TODO: add the ability to use workspace name or dataset name instead of id
-    # TODO: add the other options to the settings
     def refresh(
         self,
-        workspace_id: str,
-        dataset_id: str,
         notify_option: t.Literal[
             "MailOnCompletion", "MailOnFailure", "NoNotification"
         ] = "MailOnCompletion",
         type: str | None = None,
     ):
-        """Trigger a refresh of the dataset."""
+        """Trigger a refresh of the configured dataset."""
         body = {
             "notifyOption": notify_option,
             # "type": type,
         }
 
-        url = BASE_URL + f"/groups/{workspace_id}/datasets/{dataset_id}" + "/refreshes"
+        url = (
+            f"{self.api_url}/groups/{self.workspace_id}"
+            f"/datasets/{self.dataset_id}/refreshes"
+        )
         res = requests.post(url, json=body, headers=self.headers, timeout=TIMEOUT)
         self.log.info("refresh trigger response", status_code=res.status_code)
         # Power BI's enhanced refresh API returns 202 Accepted on success, not 200.

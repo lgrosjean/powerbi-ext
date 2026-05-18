@@ -1,3 +1,4 @@
+import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -10,6 +11,10 @@ TOKEN = "token"
 WORKSPACE_ID = "workspace_id"
 DATASET_ID = "dataset_id"
 
+# Meltano-populated env vars must be present for PowerBIExtension to construct.
+os.environ.setdefault("POWERBI_WORKSPACE_ID", WORKSPACE_ID)
+os.environ.setdefault("POWERBI_DATASET_ID", DATASET_ID)
+
 
 @patch("powerbi_extension.extension.get_token", return_value=TOKEN)
 def test_init_not_token(mock_get_token: MagicMock):
@@ -17,6 +22,9 @@ def test_init_not_token(mock_get_token: MagicMock):
     mock_get_token.assert_called_once()
     assert ext.log
     assert ext.headers == {"Authorization": f"Bearer {TOKEN}"}
+    assert ext.workspace_id == WORKSPACE_ID
+    assert ext.dataset_id == DATASET_ID
+    assert ext.api_url == BASE_URL
 
 
 class TestExtension:
@@ -39,12 +47,12 @@ class TestExtension:
                 "x-ms-request-id": request_id,
             },
         )
-        url = BASE_URL + f"/groups/{WORKSPACE_ID}/datasets/{DATASET_ID}" + "/refreshes"
+        url = f"{BASE_URL}/groups/{WORKSPACE_ID}/datasets/{DATASET_ID}/refreshes"
         body = {
             "notifyOption": "MailOnCompletion",
         }
         mock_post.return_value = mock_res
-        res = self.ext.refresh(workspace_id=WORKSPACE_ID, dataset_id=DATASET_ID)
+        res = self.ext.refresh()
         mock_post.assert_called_once_with(
             url, json=body, headers=self.ext.headers, timeout=TIMEOUT
         )
@@ -53,13 +61,13 @@ class TestExtension:
     @patch("requests.post")
     def test_refresh_not_ok(self, mock_post: MagicMock):
         mock_res = MagicMock(status_code=400)
-        url = BASE_URL + f"/groups/{WORKSPACE_ID}/datasets/{DATASET_ID}" + "/refreshes"
+        url = f"{BASE_URL}/groups/{WORKSPACE_ID}/datasets/{DATASET_ID}/refreshes"
         body = {
             "notifyOption": "MailOnCompletion",
         }
         mock_post.return_value = mock_res
         with pytest.raises(RequestException):
-            self.ext.refresh(workspace_id=WORKSPACE_ID, dataset_id=DATASET_ID)
+            self.ext.refresh()
 
         mock_post.assert_called_once_with(
             url, json=body, headers=self.ext.headers, timeout=TIMEOUT
