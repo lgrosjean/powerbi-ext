@@ -1,27 +1,51 @@
 version: 1
-project_id: powerbi-ext
+project_id: utility-powerbi
 send_anonymous_usage_stats: false
 default_environment: test
 environments:
   - name: test
 plugins:
   utilities:
-    - name: powerbi-ext
-      namespace: powerbi-ext
+    - name: powerbi
+      namespace: powerbi
       pip_url: -e .
+      executable: powerbi-extension
       commands:
-        help: --help
-      settings: # Meltano will automatically load this config to POWERBI_EXT_.. ENV VAR
+        refresh:
+          args: refresh
+          description: Trigger a Power BI dataset refresh and wait for completion.
+        status:
+          args: status
+          description: Get the status of the most recent (or a specific) refresh.
+        history:
+          args: history
+          description: List recent refresh history for the dataset.
+      # Meltano derives env vars from namespace: POWERBI_TENANT_ID, POWERBI_CLIENT_ID, etc.
+      settings:
         - name: tenant_id
-          description: PowerBI tenant ID
+          label: Tenant ID
           kind: password
+          description: Azure AD tenant ID.
         - name: client_id
-          description: PowerBI Client ID
+          label: Client ID
           kind: password
+          description: Azure AD application (client) ID.
         - name: client_secret
-          description: PowerBI Client Secret
+          label: Client Secret
           kind: password
+          description: Azure AD application client secret.
         - name: workspace_id
-          description: The unique identifier of the PowerBI Workspace
+          label: Workspace ID
+          kind: string
+          description: Power BI workspace (group) ID containing the dataset.
         - name: dataset_id
-          description: The unique identifier of the PowerBI Dataset to refresh
+          label: Dataset ID
+          kind: string
+          description: Power BI dataset (semantic model) ID to refresh.
+        - name: api_url
+          label: API URL
+          kind: string
+          value: https://api.powerbi.com/v1.0/myorg
+          description: Power BI REST API base URL. Override for sovereign clouds (e.g. api.powerbigov.us).
+      settings_group_validation:
+        - [tenant_id, client_id, client_secret, workspace_id, dataset_id]
