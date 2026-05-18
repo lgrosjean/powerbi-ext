@@ -8,7 +8,7 @@ import structlog
 from meltano.edk import models
 from meltano.edk.extension import ExtensionBase
 
-from powerbi_ext.auth import get_token
+from powerbi_extension.auth import get_token
 
 BASE_URL = "https://api.powerbi.com/v1.0/myorg"
 TIMEOUT = 30

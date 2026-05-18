@@ -4,14 +4,14 @@ import pytest
 from meltano.edk.models import Describe, ExtensionCommand
 from requests import RequestException
 
-from powerbi_ext.extension import BASE_URL, TIMEOUT, PowerBIExtension
+from powerbi_extension.extension import BASE_URL, TIMEOUT, PowerBIExtension
 
 TOKEN = "token"
 WORKSPACE_ID = "workspace_id"
 DATASET_ID = "dataset_id"
 
 
-@patch("powerbi_ext.extension.get_token", return_value=TOKEN)
+@patch("powerbi_extension.extension.get_token", return_value=TOKEN)
 def test_init_not_token(mock_get_token: MagicMock):
     ext = PowerBIExtension()
     mock_get_token.assert_called_once()

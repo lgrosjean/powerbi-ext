@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from azure.identity import ClientSecretCredential
 
-from powerbi_ext.auth import SCOPE, get_credential, get_token
+from powerbi_extension.auth import SCOPE, get_credential, get_token
 
 TOKEN = "token"
 TENANT_ID, CLIENT_ID, CLIENT_SECRET = "tenant_id", "client_id", "client_secret"
@@ -61,7 +61,7 @@ def test_get_token():
     mock_get_token = MagicMock(return_value=mock_access_token)
     mock_credential = MagicMock(get_token=mock_get_token)
     with patch(
-        "powerbi_ext.auth.get_credential", return_value=mock_credential
+        "powerbi_extension.auth.get_credential", return_value=mock_credential
     ) as mock_get_credential:
         result = get_token(
             tenant_id=TENANT_ID,

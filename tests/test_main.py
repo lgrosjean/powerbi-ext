@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 from typer.testing import CliRunner
 
-from powerbi_ext.main import PowerBIExtension, app
+from powerbi_extension.main import PowerBIExtension, app
 
 runner = CliRunner()
 

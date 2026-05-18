@@ -5,7 +5,7 @@ import typer
 from meltano.edk.extension import DescribeFormat
 from meltano.edk.logging import default_logging_config, parse_log_level
 
-from powerbi_ext.extension import PowerBIExtension
+from powerbi_extension.extension import PowerBIExtension
 
 APP_NAME = "PowerBI"
 

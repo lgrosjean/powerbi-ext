@@ -1,22 +1,17 @@
 [tool.poetry]
-name = "powerbi-ext"
+name = "utility-powerbi"
 version = "0.0.1"
-description = "`powerbi-ext` is a Meltano utility extension."
-authors = ["Leo Grosjean"]
+description = "Meltano utility extension for triggering and monitoring Power BI dataset refreshes."
+authors = ["Matatika <support@matatika.com>"]
 license = "Apache 2.0"
+readme = "README.md"
+repository = "https://github.com/Matatika/utility-powerbi"
 packages = [
-    { include = "powerbi_ext" },
-    # uncomment this if you want to include static assets
-    # { include = "files_powerbi-ext.*" }
+    { include = "powerbi_extension" },
 ]
-# If you need to static assets with your extension, you can add them here.
-# Under a directory path of "files_powerbi-ext/"
-#include = [
-#    "files_powerbi-ext/somefile.thing"
-#]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.12"
+python = ">=3.10,<3.13"
 PyYAML = "^6.0.0"
 click = "^8.1.3"
 typer = "^0.6.1"
@@ -37,4 +32,4 @@ requires = ["poetry-core>=1.0.8"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-powerbi-ext = 'powerbi_ext.main:app'
+powerbi-extension = 'powerbi_extension.main:app'
