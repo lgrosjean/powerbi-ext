@@ -161,21 +161,11 @@ class TestExtension:
         assert exc_info.value.request_id == "abc"
         assert exc_info.value.last_status == "Unknown"
 
-    @patch.object(ExtensionCommand, "__new__")
-    @patch.object(Describe, "__new__")
-    def test_describe(
-        self,
-        mock_describe_class: MagicMock,
-        mock_command_class: MagicMock,
-    ):
-        name, description = "powerbi_extension", "extension commands"
-        mock_command = MagicMock(name=name, description=description)
-        mock_command_class.return_value = mock_command
-
-        self.ext.describe()
-
-        mock_command_class.assert_called_once_with(
-            ExtensionCommand, name=name, description=description
-        )
-
-        mock_describe_class.assert_called_once_with(Describe, commands=[mock_command])
+    def test_describe(self):
+        result = self.ext.describe()
+        assert isinstance(result, Describe)
+        command_names = {cmd.name for cmd in result.commands}
+        assert command_names == {"refresh", "status", "history"}
+        for cmd in result.commands:
+            assert isinstance(cmd, ExtensionCommand)
+            assert cmd.description  # non-empty

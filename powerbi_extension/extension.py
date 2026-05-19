@@ -142,16 +142,20 @@ class PowerBIExtension(ExtensionBase):
         raise PowerBIRefreshTimeout(request_id, result.get("status", "Unknown"))
 
     def describe(self) -> models.Describe:
-        """Describe the extension.
-
-        Returns:
-            The extension description
-        """
-        # TODO: could we auto-generate all or portions of this from typer instead?
+        """Describe the extension's available commands."""
         return models.Describe(
             commands=[
                 models.ExtensionCommand(
-                    name="powerbi_extension", description="extension commands"
-                )
+                    name="refresh",
+                    description="Trigger a Power BI dataset refresh and (by default) wait for completion.",
+                ),
+                models.ExtensionCommand(
+                    name="status",
+                    description="Get the status of the most recent (or a specific) refresh.",
+                ),
+                models.ExtensionCommand(
+                    name="history",
+                    description="List recent refresh history for the configured dataset.",
+                ),
             ]
         )
